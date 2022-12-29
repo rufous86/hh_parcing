@@ -1,1 +1,1 @@
-# hh_parcing
+# Парсинг hh.ru через api
