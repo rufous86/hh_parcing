@@ -20,12 +20,10 @@ def get_vacancy(skills, pages=100):
     return res
 
 
-# skill_list = ['machine AND learning', 'df AND science', 'NLP',
-#               'spark', 'hadoop', 'pandas', 'dask', 'deep AND learning', 'pytorch',
-#               'tensorflow', 'keras', 'ai AND developer', 'computer AND vision',
-#               'нейронные AND сети', 'big AND data']
-
-skill_list = ['pytorch']
+skill_list = ['machine AND learning', 'data AND science', 'NLP',
+              'spark', 'hadoop', 'pandas', 'dask', 'deep AND learning', 'pytorch',
+              'tensorflow', 'keras', 'ai AND developer', 'computer AND vision',
+              'нейронные AND сети', 'big AND data']
 
 df = pd.DataFrame(get_vacancy(skill_list))
 
@@ -62,13 +60,35 @@ df = df.dropna(subset=['salary_from', 'salary_to'])
 df['salary_mean'] = round((df['salary_from'] + df['salary_to']) / 2)
 df = df.drop(['salary_currency', 'salary_from', 'salary_to'], axis=1)
 
+features = {
+    'skills': [],
+    'experience': [],
+    'professional roles': [],
+    'employer': [],
+    'employer trusted': [],
+    'url': [],
+}
+print('skill parcing...')
+
+for indx, id in enumerate(df['id']):
+    req = requests.get(f'https://api.hh.ru/vacancies/{id}').json()
+    skills = [skill['name'] for skill in req['key_skills']]
+    features['skills'].append(skills)
+    features['experience'].append(req['experience']['name'])
+    features['professional roles'].append(req['professional_roles'][0]['name'])
+    features['employer'].append(req['employer']['name'])
+    features['employer trusted'].append(req['employer']['trusted'])
+    features['url'].append(req['alternate_url'])
+    if indx == 100:
+        print(f'skill parcing: {(indx+1) * 100/len(df):.0f}% comleted')
+
+df['skills'] = features['skills']
+df['experience'] = features['experience']
+df['professional roles'] = features['professional roles']
+df['employer'] = features['employer']
+df['employer trusted'] = features['employer trusted']
+df['url'] = features['url']
+
 print(df.info())
 
 df.to_csv('data.csv', index=False)
-
-# skill_list = []
-
-# for id in tqdm(df['id']):
-#     req = requests.get(f'https://api.hh.ru/vacancies/{id}').json()
-#     skills = [skill['name'] for skill in req['key_skills'] if isinstance(req, dict)]
-#     skill_list.extend(skills)
