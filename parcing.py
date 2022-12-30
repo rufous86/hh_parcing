@@ -70,10 +70,13 @@ features = {
 }
 print('skill parcing...')
 
+all_skills = []
+
 for indx, id in enumerate(df['id']):
     req = requests.get(f'https://api.hh.ru/vacancies/{id}').json()
     skills = [skill['name'] for skill in req['key_skills']]
     features['skills'].append(skills)
+    all_skills.extend(skills)
     features['experience'].append(req['experience']['name'])
     features['professional roles'].append(req['professional_roles'][0]['name'])
     features['employer'].append(req['employer']['name'])
