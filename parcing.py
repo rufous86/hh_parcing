@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 
 
-def get_vacancy(skills, pages=100):
+def get_vacancies(skills, filename, pages=10):
     res = []
     for indx, skill in enumerate(skills):
-        print(f'collecting <{skill}> ({indx+1} of {len(skills)})')
+        print(f'\ncollecting <{skill}> ({indx+1} of {len(skills)})')
         for page in range(pages):
             params = {
                 'text': f'{skill}',
@@ -17,6 +17,7 @@ def get_vacancy(skills, pages=100):
             req = requests.get('https://api.hh.ru/vacancies', params).json()
             if 'items' in req.keys():
                 res.extend(req['items'])
+            print('|', end='')
 
     df = pd.DataFrame(res)
 
@@ -62,11 +63,11 @@ def get_vacancy(skills, pages=100):
         'employer trusted': [],
         'url': [],
     }
-    print('skill parcing...')
+    print('\nskill parcing...')
 
     all_skills = []
 
-    for indx, id in enumerate(df['id']):
+    for id in df['id']:
         req = requests.get(f'https://api.hh.ru/vacancies/{id}').json()
         skills = [skill['name'] for skill in req['key_skills']]
         features['skills'].append(skills)
@@ -76,8 +77,8 @@ def get_vacancy(skills, pages=100):
         features['employer'].append(req['employer']['name'])
         features['employer trusted'].append(req['employer']['trusted'])
         features['url'].append(req['alternate_url'])
-        if indx == 100:
-            print(f'skill parcing: {(indx+1) * 100/len(df):.0f}% comleted')
+        print('|', end='')
+    print()
 
     df['skills'] = features['skills']
     df['experience'] = features['experience']
@@ -88,12 +89,5 @@ def get_vacancy(skills, pages=100):
 
     print(df.info())
 
-    df.to_csv('data.csv', index=False)
-
-
-skill_list = ['machine AND learning', 'data AND science', 'NLP',
-              'spark', 'hadoop', 'pandas', 'dask', 'deep AND learning', 'pytorch',
-              'tensorflow', 'keras', 'ai AND developer', 'computer AND vision',
-              'нейронные AND сети', 'big AND data']
-
-get_vacancy(skill_list)
+    df.to_csv(filename, index=False)
+    print(f'data stored in file {filename}')
