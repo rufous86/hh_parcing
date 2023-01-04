@@ -2,8 +2,6 @@
 
 Возникла необходимость изобразить на интерактивной карте актуальное предложение вакансий в сфере Data Science с агрегацией по городам.
 
-[репозиторий Github](https://github.com/rufous86/hh_parcing)
-
 Действовать будем в 3 этапа:
 
 1. [Парсинг вакансий с hh API](#1-парсинг-вакансий-с-hh-api)
@@ -98,7 +96,7 @@ df.head()
 
 ```python
 import folium
-from folium import plugins
+from folium import plugins, branca
 ```
 
 Для начала создаем объект класса Map для рисования карты. В него передаем для параметра: координаты локализации и степень приближения при загрузке карты.
@@ -139,11 +137,62 @@ folium.GeoJson('russia.geojson',
 Создаем список координат и передаем его в класс HeatMap. Дабавляем HeatMap к нашему объекту карты.
 ```python
 heat_data = [[lat, lon] for lon, lat in df['coords']]
-plugins.HeatMap(heat_data, radius=18).add_to(mapObj)
+plugins.HeatMap(heat_data, radius=18, gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}).add_to(mapObj)
 ```
+Легенду можно создать с помощью класса LinearColormap:
+```python
+colormap = branca.colormap.LinearColormap(['blue', 'lime', 'red'], 
+                                          vmin=1, 
+                                          vmax=df['city'].value_counts()[0], 
+                                          caption='Насыщение рынка по количеству вакансий')
+colormap.add_to(mapObj)
+```
+
+
 Теперь карту можно сохранить в формат 'html'.
 ```python
 mapObj.save('output1.html')
 ```
 ![map_count.png](assets/map_count.png)
 
+Тоже самое проделаем для данных о средней зарплате. Единственное отличие - в список heat_data помимо координат передаем третий параметр weight (ими будут вычисленные в разрезе населенных пунктов средние зарплаты)
+
+```python
+salary_mean = (df
+     .groupby('city')[['salary_mean']]
+     .agg('mean')
+)
+
+salary_mean = coords.merge(salary_mean, on='city')
+
+mapObj = folium.Map(location=[57.23337810789467, 48.05744173358704], zoom_start=5)
+
+bordersStyle = {
+    'color': 'red',
+    'weight': 0.2,
+    'fillColor': 'grey',
+    'fillOpacity': 0.3
+}
+
+folium.GeoJson('russia.geojson',
+               name='Russia',
+              style_function=lambda x: bordersStyle).add_to(mapObj)
+
+heat_data = []
+for i in range(len(salary_mean)):
+    heat_data.append([*reversed(salary_mean['coords'][i]), salary_mean['salary_mean'][i]])
+
+plugins.HeatMap(heat_data, radius=18, gradient={0.4: 'blue', 0.65: 'lime', 1: 'red'}).add_to(mapObj)
+
+colormap = branca.colormap.LinearColormap(['blue', 'lime', 'red'], 
+                                          vmin=salary_mean['salary_mean'].min(), 
+                                          vmax=salary_mean['salary_mean'].max(), 
+                                          caption='Насыщение рынка по средней предлагаемой зарплате')
+colormap.add_to(mapObj)
+
+mapObj.save('output2.html')
+```
+
+![map_salary.png](assets/map_salary.png)
+
+Полный листинг примера в [репозитории Github](https://github.com/rufous86/hh_parcing)
