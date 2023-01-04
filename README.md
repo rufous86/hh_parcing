@@ -116,9 +116,9 @@ mapObj.save('output.html')
 ```
 > Открываем сохраненный файл 'output.html'. Перемещаемся в интересующее место на карте. Правая кнопка -> inspect -> Console. Вводим:
 
-> map_<какие-то цифры>.getCenter() - координаты центра текущего вида.
+> map_<какие-то цифры>.getCenter() - получаем координаты центра текущего вида.
 
-> map_<какие-то цифры>.getZoom() - zoom текущего вида.
+> map_<какие-то цифры>.getZoom() - получаем zoom текущего вида.
 
 ![map_get.png](assets/map_get.png)
 
@@ -143,6 +143,7 @@ plugins.HeatMap(heat_data, radius=18).add_to(mapObj)
 ```
 Теперь карту можно сохранить в формат 'html'.
 ```python
-mapObj.save('output.html')
+mapObj.save('output1.html')
 ```
 ![map_count.png](assets/map_count.png)
+
